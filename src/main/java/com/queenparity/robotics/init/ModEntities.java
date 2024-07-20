@@ -2,6 +2,7 @@ package com.queenparity.robotics.init;
 
 import com.queenparity.robotics.Robotics;
 import com.queenparity.robotics.entity.RobotEntity;
+import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnGroup;
@@ -17,7 +18,7 @@ public class ModEntities
     //Initialize class
     public static void initialize()
     {
-
+        FabricDefaultAttributeRegistry.register(ROBOT_ENTITY, RobotEntity.createMobAttributes());
     }
 
     //Register block entity with game and return
