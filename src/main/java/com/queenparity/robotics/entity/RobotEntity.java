@@ -1,11 +1,9 @@
 package com.queenparity.robotics.entity;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import com.mojang.serialization.Dynamic;
-import com.queenparity.robotics.entity.ai.brain.task.RobotTaskListProvider;
+import com.queenparity.robotics.entity.ai.brain.RobotBrain;
 import net.minecraft.entity.EntityType;
-import net.minecraft.entity.ai.brain.Activity;
 import net.minecraft.entity.ai.brain.Brain;
 import net.minecraft.entity.ai.brain.MemoryModuleType;
 import net.minecraft.entity.ai.brain.sensor.Sensor;
@@ -19,11 +17,15 @@ public class RobotEntity extends PathAwareEntity
 {
     private static final ImmutableList<MemoryModuleType<?>> MEMORY_MODULES = ImmutableList.of(
             MemoryModuleType.WALK_TARGET,
+            MemoryModuleType.LOOK_TARGET,
             MemoryModuleType.PATH,
             MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE
     );
     private static final ImmutableList<SensorType<? extends Sensor<? super RobotEntity>>> SENSORS = ImmutableList.of(
-            SensorType.NEAREST_LIVING_ENTITIES
+            SensorType.NEAREST_LIVING_ENTITIES,
+            SensorType.NEAREST_PLAYERS,
+            SensorType.NEAREST_ITEMS,
+            SensorType.HURT_BY
     );
     /*public static final Map<MemoryModuleType<GlobalPos>, BiPredicate<RobotEntity, RegistryEntry<PointOfInterestType>>> POINTS_OF_INTEREST = ImmutableMap.of(
             Robotics.LOG_POS,
@@ -49,25 +51,16 @@ public class RobotEntity extends PathAwareEntity
     @Override
     protected Brain<?> deserializeBrain(Dynamic<?> dynamic)
     {
-        Brain<RobotEntity> brain = this.createBrainProfile().deserialize(dynamic);
-        this.initBrain(brain);
-        return brain;
+        return RobotBrain.create(this.createBrainProfile().deserialize(dynamic));
     }
 
-    public void reinitializeBrain(ServerWorld world)
+    /*public void reinitializeBrain(ServerWorld world)
     {
         Brain<RobotEntity> brain = this.getBrain();
         brain.stopAllTasks(world, this);
         this.brain = brain.copy();
         this.initBrain(this.getBrain());
-    }
-
-    private void initBrain(Brain<RobotEntity> brain)
-    {
-        brain.setTaskList(Activity.CORE, RobotTaskListProvider.createTreeChopTask(0.5F));
-        brain.setCoreActivities(ImmutableSet.of(Activity.CORE));
-        brain.refreshActivities(this.getWorld().getTimeOfDay(), this.getWorld().getTime());
-    }
+    }*/
 
     @Override
     protected void mobTick()
@@ -75,6 +68,11 @@ public class RobotEntity extends PathAwareEntity
         this.getWorld().getProfiler().push("robotBrain");
         this.getBrain().tick((ServerWorld) this.getWorld(), this);
         this.getWorld().getProfiler().pop();
+
+        this.getWorld().getProfiler().push("robotActivityUpdate");
+        RobotBrain.updateActivities(this);
+        this.getWorld().getProfiler().pop();
+
         super.mobTick();
     }
 
@@ -89,9 +87,5 @@ public class RobotEntity extends PathAwareEntity
     public void readCustomDataFromNbt(NbtCompound nbt)
     {
         super.readCustomDataFromNbt(nbt);
-        if(this.getWorld() instanceof ServerWorld)
-        {
-            this.reinitializeBrain((ServerWorld) this.getWorld());
-        }
     }
 }

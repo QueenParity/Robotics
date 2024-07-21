@@ -46,18 +46,27 @@ public class FindWoodTask extends MultiTickTask<RobotEntity>
     @Override
     protected void run(ServerWorld world, RobotEntity robotEntity, long time)
     {
-        Robotics.LOGGER.info("FindLog:run");
+        Robotics.LOGGER.info("FindLog:run, " + currentTarget.getX() + ", " + currentTarget.getY() + ", " + currentTarget.getZ());
         //robotEntity.getBrain().remember(MemoryModuleType.LOOK_TARGET, new BlockPosLookTarget(currentTarget));
+        robotEntity.getBrain().remember(MemoryModuleType.WALK_TARGET, new WalkTarget(currentTarget, SPEED, 0));
+    }
+
+    @Override
+    protected void keepRunning(ServerWorld world, RobotEntity robotEntity, long time)
+    {
+        Robotics.LOGGER.info("FindLog:keepRunning, " + currentTarget.getX() + ", " + currentTarget.getY() + ", " + currentTarget.getZ());
         robotEntity.getBrain().remember(MemoryModuleType.WALK_TARGET, new WalkTarget(currentTarget, SPEED, 0));
     }
 
     @Override
     protected boolean shouldKeepRunning(ServerWorld world, RobotEntity robotEntity, long time)
     {
-        if(robotEntity.getBrain().hasMemoryModule(MemoryModuleType.WALK_TARGET))
+        /*if(robotEntity.getBrain().hasMemoryModule(MemoryModuleType.WALK_TARGET))
         {
+            Robotics.LOGGER.info("FindLog:shouldKeepRunning:False");
             return false;
         }
+        Robotics.LOGGER.info("FindLog:shouldKeepRunning:True");*/
         return true;
     }
 }
